@@ -1,5 +1,7 @@
 This is a personal project to help me manage my openrct2 server.
 
+This is version 1.0, bugs may exist
+
 To use:
 
 Place the .bat in the same folder as  openrct2.exe 
