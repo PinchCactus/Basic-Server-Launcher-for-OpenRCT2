@@ -1,11 +1,22 @@
-This is a personal project to help me manage my openrct2 server.
+Version 1.1.1
 
-This is version 1.0, bugs may exist
+This is a personal project ot help manage my openrct2 server.
 
-To use:
+This release should be considered "feature complete" There are major changes I would like to do but cannot commit to right now.
 
-Place the .bat in the same folder as  openrct2.exe 
+Custom Settings Profiles are implemented, define them in the .bat
 
-In order for BLS_OpenRCT2 to function properly you must define your openrct2.exe, saves, and autosaves locations at the top of the .bat
+You can also enter custom settings when the .bat runs, though these wont be saved.
 
-You can also add server arguments if so desired. 
+Alternative .exe location implemented. Put this .bat in the same folder as openrct2.exe OR define the location of the .exe in the .bat
+
+Debug messages removed
+
+
+TO USE: 
+
+Place .bat into the same folder as openrct2.exe or define OpenRCT2Dir in the .bat
+
+If your saves are located somewhere other that the default path make sure you define the locations in the .bat
+
+Autostart will not function on pc restart without adding the .bat to startup in windows
