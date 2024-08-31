@@ -262,7 +262,8 @@ goto :loadfile
 :listautosaves
 
 cls
-echo: %custom%
+::DEBUG
+::echo: %custom%
 echo Listing autosave files in %autosaveFolder%
 set "count=0"
     for /f "delims=" %%i in ('dir /b /a-d /o-d "%autosaveFolder%\*.park" 2^>nul') do (
@@ -445,7 +446,7 @@ set "filePath=%otherlocation%\%latestFile%"
 
 
 
-::customsettings to be implemented
+::CUSTOM SETTINGS
 
 
 :dsettingsmenu
@@ -543,7 +544,7 @@ if "%userChoice%"=="restart" (
 :: Launch OpenRCT2 with the selected file
 ::DEBUG
 ::echo: gui value %gui%
-pause
+::pause
 
 
 if "%headlessMode%" == "true" (
