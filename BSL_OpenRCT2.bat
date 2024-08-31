@@ -1,34 +1,52 @@
 @echo off
 setlocal enabledelayedexpansion
 
+:start
 
-:: replace autosaveFolder and savesFolder with your folder locations
-set "autosaveFolder=C:\Users\admin\Documents\OpenRCT2\save\autosave" 
-set "savesFolder=C:\Users\admin\Desktop\Roller_Coaster_Tycoon\Saves"
-:: replace OpenRCT2Dir with your openrct.exe location
-set "OpenRCT2Dir=C:\Users\admin\Desktop\Roller_Coaster_Tycoon"
-set "latestFile="
-set "filePath="
-set "fileFound=false"
-set "headlessMode=false"
-::server autostart settings. autostart loads the headless client with the latest autosave 
-set "autosettings=--port 11754 --verbose --headless" 
-:: Settings for manual loading. DO NOT USE --headless HERE
+cls
+
+::SERVER AUTOSTART SETTINGS: autostart loads the headless client with the latest autosave. these settings only apply to autostart
+set "autosettings=--port 11753 --verbose --headless" 
+
+:: DEFAULT SETTINGS:  DO NOT USE --headless HERE! These will be applied unless using AUTOSTART or CUSTOM SETTINGS
 set "settings=--port 11753 --verbose"
 
-:: CUSTOM SETTINGS BELOW NOT IMPLEMENTED AT THIS TIME
-::you can name and set custom settings below
+:: ALTERNATIVE .EXE LOCATION: if this .bat is not in the same folder as openrct2.exe enter your openrct2.exe location below. 
+set "OpenRCT2Dir=C:\Users\admin\Desktop\Roller_Coaster_Tycoon\openrct2.exe"
 
-set "CustomSettingsName=NameTheseSettings"
-set "Csettings=PutSettingsHere"
+:: REPLACE autosaveFolder and savesFolder with your folder locations if needed
+:: this WILL NOT change where openrct2 saves files, only where this .bat looks for save files to load
+:: EXAMPLE: set "savesFolder=C:\Users\admin\Desktop\Roller_Coaster_Tycoon\"
+set "autosaveFolder=%userprofile%\Documents\OpenRCT2\save\autosave" 
+set "savesFolder=%userprofile%\Documents\OpenRCT2\save"
+ 
 
-set "CustomSettingsName1=NameTheseSettings"
-set "Csettings1=PutSettingsHere"
+
+:: ENTER CUSTOM SETTINGS BELOW 
+
+::You can name and define up to 3 custom settings profiles below
+
+set "customname=NameTheseSettings"
+set "customsettings=PutSettingsHere"
+
+set "customname1=NameTheseSettings"
+set "customsettings1=PutSettingsHere"
+
+set "customname2=ExampleNameHere"
+set "customsettings2=--example --settings"
 
 
-
-
-:start
+::::::::::::::::::::DONT CHANGE ANYTHING BELOW UNLESS YOU KNOW WHAT YOU'RE DOING:::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+set "latestFile="
+set "filePath="
+set "fileFound=false"  
+set "headlessMode=false"
+set "custom=false"
+set "dmenu=Start Openrct2 with default settings"
+set "dmenu1=Start Openrct2 and load save with default settings"
+set "dmenu2=Start headless and load save with default settings"
+set "gui="
+set "defaultsettings=%settings%"
 
 echo Welcome Back
 
@@ -48,6 +66,8 @@ call :listmanualsaves
 
 call :dirprompt
 
+call :retry
+
 call :loadfile
 
 
@@ -55,10 +75,36 @@ call :loadfile
 
 :checkOpenRCT2
 
+if exist "%~DP0openrct2.exe" (
+    echo "OpenRCT2.exe found in %~DP0"
+    Timeout /t 5
+    exit /b
+    
+)
+if not exist "%~DP0openrct2.exe" (
+    echo OpenRCT2.exe not found in %~DP0.  
+    echo:
+    echo Checking %OpenRCT2Dir%
+    Timeout /T 5
+    cls
+
+)
+if exist "%OpenRCT2Dir%" (
+    echo: OpenRCT2.exe found in %OpenRCT2Dir%
+Timeout /T 5
+
+exit /b
+
+)
+    
+
 if not exist "%OpenRCT2Dir%\*.exe" (
-    echo openrct2.exe not found. Script will exit. Check OpenRCT2Dir in the bat!
+    echo Openrct2.exe not found. Script will exit. 
+    echo:
+    echo Place this .bat in the same folder as openrct2.exe OR define OpenRCT2Dir in the .bat
     pause
-    exit /b1
+    exit /b
+    Timeout /T 5
  ) else ( 
         exit /b 
 )
@@ -75,95 +121,157 @@ for /f "delims=" %%i in ('dir /b /a-d /o-d "%autosaveFolder%\*.park" 2^>nul') do
 exit /b
 
 :foundFile
+
 :: Check if a file was found
 
 if "%latestFile%"=="" (
     echo No save files found in %autosaveFolder%. autostart will not function properly.
     pause
     cls
-    exit /b
-) else (
+    exit /b 
+ 
+ ) else (
  exit /b
 )
   
 
 
 :autostart
+
 choice /c:CY /n /m "Server will start in 10 seconds. Press Y to run now, or C to Cancel" /t:10 /d:Y
-if errorlevel 2 (
+    if errorlevel 2 (
     call :autoload
     exit /b
     
-) else if errorlevel 1 (
+    ) else if errorlevel 1 (
     
     exit /b
     )
 
  :autoload
+  
   cls
+  
   echo Server starting with save file %latestFile%
-  Timeout /T 10
-  start "" "%OpenRCT2Dir%\OpenRCT2.exe" host "%autosaveFolder%\!latestFile!" %autosettings%
-  exit
+  if exist "%~DP0openrct2.exe" (
+  
+  start "" "%~DP0openrct2.exe" host "%autosaveFolder%\!latestFile!" %autosettings%
+
+  ) else (
+if exist "%OpenRCT2Dir%" (
+ start "" "%OpenRCT2Dir%" host "%autosaveFolder%\!latestFile!" %autosettings% )
+
+ )
+ 
+goto :quit
 
 
 :listoptions
 
 cls
-
-echo 1. Start GUI without loading save
-echo 2. Start GUI and load save
-echo 3. Start headless and load save
-echo 4. Restart
+echo The current settings are:%settings% 
+echo:
+echo:
+echo 1. %dmenu%
+echo:
+echo 2. %dmenu1%
+echo:
+echo 3. %dmenu2%
+echo:
+echo 4. Settings Menu
+echo:
 echo 5. Exit without starting 
-choice /C 12345 /m "Choose an option to continue:"
+echo:
+echo 6. Restart
+echo:
+choice /C 123456 /m "Choose an option to continue:"
+
+::DEBUG
+::set "currenterrorlevel=%errorlevel%"
+
+::echo: errorlevel is : %currenterrorlevel%
+pause
+
+if errorlevel 6 (
+    goto :start
+)
 
 if errorlevel 5 (
-    exit
+    goto :quit
 )
 
 if errorlevel 4 (
-    call "%~f0"
+    set "custom=true"
+    goto :dsettingsmenu
 )
 
 if errorlevel 3 ( 
     set "headlessMode=true"
+    set "custom=false"
+    set "gui=false"
+    set "settings=%defaultsettings%"
     exit /b
 )
 
 if errorlevel 2 (
-    set "headlessMode=false"
+    if "%custom%" == "true" (
+        set "headlessMode=false"
+    ) else (
+        set "gui=true"
+    )
     exit /b
-)
+        
+    )
+    
 
 if errorlevel 1 (
-    start "" "%OpenRCT2Dir%\OpenRCT2.exe"
-
-    echo Starting OpenRCT2.exe
     
-    pause
+    if "%custom%" == "true" (
+        echo "custom=true" 
+        pause
+    ) else ( 
+        if exist "%~DP0openrct2.exe" (
+            start "" "%~DP0openrct2.exe" host "" %settings%
+            echo: Starting OpenRCT2 with these settings:
+            echo: %settings%
+            goto :quit
+        ) else if exist "%OpenRCT2Dir%" (
+            start "" "%OpenRCT2Dir%" host "" %settings% 
+            echo: Starting OpenRCT2 with these settings:
+            echo: %settings%
+            goto :quit 
+            )
+        )
+    )
+       
 
-    exit
-)
+::DEBUG
+::echo: end of listoptions      
+ pause
+goto :loadfile 
 
 
 
 
 
+
+
+
+ 
 
 :listautosaves
 
 cls
-
+echo: %custom%
 echo Listing autosave files in %autosaveFolder%
 set "count=0"
-for /f "delims=" %%i in ('dir /b /a-d /o-d "%autosaveFolder%\*.park" 2^>nul') do (
+    for /f "delims=" %%i in ('dir /b /a-d /o-d "%autosaveFolder%\*.park" 2^>nul') do (
     set /a count+=1
     echo !count!: %%i
     set "file[!count!]=%%i"
     
 )
-if %count% == 0 (
+    if %count% == 0 (
     echo No autosave files found. Checking for manual saves
     pause
     cls
@@ -172,13 +280,13 @@ if %count% == 0 (
 )
 
 set /p userChoice=Enter the # of the file you want to load or ('0' to skip to Saves folder): 
-if "%userChoice%" == "0" (
+    if "%userChoice%" == "0" (
     exit /b
 )  
 
 ::validate choice and set latestfile
 
-if not defined file[%userChoice%] (
+    if not defined file[%userChoice%] (
     echo Invalid Selection
     goto :listautosaves
 )
@@ -202,17 +310,17 @@ for /f "delims=" %%i in ('dir /b /a-d /o-d "%savesFolder%\*.park" 2^>nul') do (
 )
 
 
-if %count% == 0 ((
+    if %count% == 0 ((
     echo No save files found in %savesFolder%!
     pause
     )
-    cls
+    
 echo Would you like to try another location or restart?    
-echo
+echo:
 echo 1. Try another location
-echo
+echo:
 echo 2. Restart Script
-echo
+echo:
 
 choice /C 12 /m "Choose an option to continue:"
 
@@ -224,17 +332,22 @@ if errorlevel 1 (
     goto :dirprompt)
 
 )
+
+
+
 set /p userChoice=Enter the # of the file you want to load or '0' to input another directory: 
-if "%userChoice%" equ "0" (
+    
+    if "%userChoice%" equ "0" (
     exit /b
 ) 
 
 ::validate choice and set latestfile
 
-if not defined file[%userChoice%] (
+    if not defined file[%userChoice%] (
     echo Invalid Selection
     exit /b
 )
+
 set "latestFile=!file[%userchoice%]!"
 set "filePath=%savesFolder%\%latestFile%"
     goto :loadfile
@@ -243,55 +356,74 @@ set "filePath=%savesFolder%\%latestFile%"
 
 :dirprompt
 
-echo.
+cls
+
 set /p "otherlocation=Enter another save location: "
 set "count=0"
 
+    if "%otherlocation%" == "PinchCactus" (
+        cls
+        echo: Computers dont make errors
+        echo: What they do they do on purpose.
+        pause
+        goto :retry
+           
+)
+
+cls
+
     if not exist %otherlocation% ((
         echo %otherlocation% NOT FOUND!)
-pause
-goto :retry    
-              
-) else (
+        pause
+        goto :retry 
     
-echo Listing save files in %otherlocation%
-set "count=0"
-for /f "delims=" %%i in ('dir /b /a-d /o-d "%otherlocation%\*.park" 2^>nul') do (
-    set /a count+=1
-    echo !count!: %%i
-    set "file[!count!]=%%i")
+
+    ) else (
+    
+    echo Listing save files in %otherlocation%
+    set "count=0"
+        for /f "delims=" %%i in ('dir /b /a-d /o-d "%otherlocation%\*.park" 2^>nul') do (
+            set /a count+=1
+            echo !count!: %%i
+            set "file[!count!]=%%i")
 
 )
 
-if %count% == 0 ((
-    echo No save files found in %otherlocation%!
-    pause
+    if %count% == 0 ((
+        echo No save files found in %otherlocation%!
+        pause
+        )
+        cls
+
+        goto :retry
+)
+
+    set /p userChoice=Enter the # of the file you want to load or '0' to exit: 
+        if "%userChoice%" equ "0" (
+        
+        exit /b 
     )
-    cls
-
-    goto :retry
-)
-
-set /p userChoice=Enter the # of the file you want to load or '0' to exit: 
-if "%userChoice%" equ "0" ((
 
 :retry
 
-echo Would you like to try another location or restart? )   
-echo.
+cls
+
+echo Would you like to try another location or restart?    
+echo:
 echo 1. Try another location
+echo:
 echo 2. Restart Script
-echo
+echo:
 choice /C 12 /m "Choose an option to continue:"
 
-if errorlevel 2 (
+    if errorlevel 2 (
     goto :start
 )
 
-if errorlevel 1 (
+    if errorlevel 1 (
     goto :dirprompt
 )
-)
+
 
 if %count% equ 0 (
     echo No save files found in %otherlocation%.
@@ -316,26 +448,151 @@ set "filePath=%otherlocation%\%latestFile%"
 ::customsettings to be implemented
 
 
+:dsettingsmenu
 
+cls
+
+if "%custom%" == "true" (
+    
+
+    set dmenu=Start openrct2 with custom settings
+    
+    set dmenu1=Start openrct2 with custom settings and load save
+)
+echo The current settings are %settings% 
+echo:
+echo:
+echo Select settings to load.     
+echo:
+echo 1. "%customname%"
+echo    "%customsettings%"
+echo:
+echo 2. "%customname1%"
+echo    "%customsettings1%"
+echo:
+echo 3. "%customname2%"
+echo    "%customsettings2%"
+echo:
+echo 4. Enter custom settings(these will NOT persist between restarts)
+echo:
+
+
+    
+choice /C 1234 /m "Choose an option:" 
+
+if errorlevel 4 ( 
+            goto :level4
+
+ ) else if errorlevel 3 (
+            cls
+            set "settings=%customsettings2%"
+            echo You have selected "%customname2%"
+            echo:
+            echo "!settings!"
+            echo:
+            pause
+            goto :listoptions
+  
+
+   ) else if errorlevel 2 (
+            cls
+            set settings=%customsettings1%
+            echo You have selected "%customname1%"
+            echo:
+            echo "!settings!"
+            echo:
+            pause
+            goto :listoptions
+
+ 
+ 
+  ) else if errorlevel 1 (
+            cls
+            set settings=%customsettings%
+            echo You have selected "%customname%"
+            echo:
+            echo "!settings!"
+            echo:
+            pause
+            goto :listoptions
+)
+
+:level4
+
+cls
+set /p userChoice=Enter your desired settings or type restart to return to main menu: 
+    
+        
+if "%userChoice%"=="restart" (
+    goto :start 
+        
+    ) else (
+     set "settings=%userChoice%"
+     cls
+    echo You have chosen and applied the settings below:
+    echo:
+     echo !settings!
+    echo:
+     pause
+    goto :listoptions
+        
+        )
 
 
 :loadfile
 :: Launch OpenRCT2 with the selected file
-if "%headlessMode%" equ "true" (
+::DEBUG
+::echo: gui value %gui%
+pause
+
+
+if "%headlessMode%" == "true" (
     echo Launching OpenRCT2 in headless mode with file: %filePath%
-    start "" "%OpenRCT2Dir%\OpenRCT2.exe" host "%filePath%" --headless %settings%
+    if exist "%~DP0openrct2.exe" (
+        start "" "%~DP0openrct2.exe" host "%filePath%" --headless %settings%
+    ) else (
+        if exist "%OpenRCT2Dir%" (
+        start "" "%OpenRCT2Dir%" host "%filePath%" --headless %settings% 
+        )    
     
-    pause
+    )  
+
+)
+
+
+
+if "%custom%" == "true" (
+    echo Launching OpenRCT2 and loading : %filepath%
+    echo:
+    echo: With these settings: %settings% 
     
-    exit
-) else (
+    if exist "%~DP0openrct2.exe" (
+        start "" "%~DP0openrct2.exe" host "%filePath%" %settings%
+    ) else ( 
+        if exist "%OpenRCT2Dir%" (
+            start "" "%OpenRCT2Dir%" host "%filePath%" %settings%
+
+        )
+    )
+)
+ 
+ if "%gui%" == "true" (
     echo Launching OpenRCT2 server with GUI and loading : %filePath%
     
-    start "" "%OpenRCT2Dir%\OpenRCT2.exe" host "%filePath%" %settings%
+    if exist "%~DP0openrct2.exe" (
+        start "" "%~DP0openrct2.exe" host "%filePath%" %settings%
+    ) else (
+        if exist "%OpenRCT2Dir%" (
+        start "" "%OpenRCT2Dir%" host "%filePath%" %settings% 
+        )    
     
-    Timeout /T 5
+    )  
+
 )
-   
+
+:quit
+
+Timeout /T 10 
     exit
 
 
