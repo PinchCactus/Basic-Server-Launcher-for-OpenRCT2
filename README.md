@@ -2,8 +2,6 @@ Version 1.1.1
 
 This is a personal project ot help manage my openrct2 server.
 
-This release should be considered "feature complete" There are major changes I would like to do but cannot commit to right now.
-
 Custom Settings Profiles are implemented, define them in the .bat
 
 You can also enter custom settings when the .bat runs, though these wont be saved.
