@@ -1,6 +1,6 @@
 Version 1.1.1
 
-This is a personal project ot help manage my openrct2 server.
+This is a personal project to help manage my openrct2 server.
 
 Custom Settings Profiles are implemented, define them in the .bat
 
